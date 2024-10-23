@@ -92,6 +92,7 @@ class Manager
             "6. Изменить значения элемента по индексу\n" +
             "7. Найти самого высокого спортсмена, занимающегося плаванием, среди мужчин\n" +
             "8. Вывести сведения о спортсменках, выступающих в юниорском разряде (14-17лет)\n" +
+            "9. Отсортировать спортсменов по фамилии\n" +
             "0. Выход из программы\n";
         Console.WriteLine(menu);
     }
@@ -103,7 +104,7 @@ class Manager
 
         Console.WriteLine("Ваш выбор:");
         do { input = Console.ReadLine(); }
-        while (uint.TryParse(input, out result) && result > 8);
+        while (uint.TryParse(input, out result) && result > 9);
 
         return result;
     }
@@ -121,8 +122,12 @@ class Manager
             case 2:
                 sportsman = GetSportsman();
                 list = sportsmen.ToList();
-                index = GetIndex(list.Count());
-                list.Insert(index, sportsman);
+                if (list.Count != 0)
+                {
+                    index = GetIndex(list.Count());
+                    list.Insert(index, sportsman);
+                }
+                else list.Insert(0, sportsman);
                 sportsmen = new LinkedList<Sportsman>(list);
                 list = null;
                 break;
@@ -135,6 +140,7 @@ class Manager
                 sportsmen.AddLast(sportsman);
                 break;
             case 5:
+                if (sportsmen.Count == 0) {Console.WriteLine("Список пуст."); break;}
                 list = sportsmen.ToList();
                 index = GetIndex(list.Count());
                 list.RemoveAt(index);
@@ -142,6 +148,7 @@ class Manager
                 list = null;
                 break;
             case 6:
+                if (sportsmen.Count == 0) {Console.WriteLine("Список пуст."); break;}
                 list = sportsmen.ToList();
                 index = GetIndex(list.Count());
                 ChangeSportsman(index, ref list);
@@ -157,6 +164,10 @@ class Manager
                 LinkedList<Sportsman>? results = FindAllJuniorFemale(sportsmen);
                 if (results == null) Console.WriteLine("Спортсменки не найдены");
                 else { Console.WriteLine("Список найденных спортсменок:"); PrintTable(results); }
+                break;
+            case 9:
+                if (sportsmen.Count == 0) {Console.WriteLine("Список пуст."); break;}
+                sportsmen = SortSportsmenByLastName(sportsmen);
                 break;
             case 0:
                 Console.WriteLine("\nВыход из программы...\n");
@@ -228,13 +239,15 @@ class Manager
         } while (input.Length < 2 || input.Length > 20 || input.Contains(' ') || input.Contains('\n'));
         sportsman.LastName = input;
 
-        Console.Write("Пол ");
+        char[] letters = {'М','Ж','M','F'};
+        Console.Write("Пол (М/Ж, M/F):");
         do
         {
             input = Console.ReadLine();
             Console.WriteLine();
-        } while (input.Length < 2 || input.Length > 20 || input.Contains(' ') || input.Contains('\n'));
-        sportsman.Gender = input;
+        } while (input.Length != 1 || !letters.Any(letter => input.ToUpper().Contains(letter)));
+        if (input == "F" || input == "Ж") sportsman.Gender = "Женский";
+        else sportsman.Gender = "Мужской";
 
         Console.Write("Вид спорта (при необходимости запись через _): ");
         do
@@ -249,14 +262,14 @@ class Manager
         {
             input = Console.ReadLine();
             Console.WriteLine();
-        } while (!uint.TryParse(input, out sportsman.BirthYear) || input.Length != 4);
+        } while (!uint.TryParse(input, out sportsman.BirthYear) || sportsman.BirthYear < 1900 || sportsman.BirthYear > 2024);
 
         Console.Write("Рост: ");
         do
         {
             input = Console.ReadLine();
             Console.WriteLine();
-        } while (!uint.TryParse(input, out sportsman.Height) || input.Length < 2 || input.Length > 3);
+        } while (!uint.TryParse(input, out sportsman.Height) || sportsman.Height < 40 || sportsman.Height > 250);
 
         return sportsman;
     }
@@ -307,14 +320,16 @@ class Manager
 
                 break;
             case 2:
-                Console.Write("Введите другой пол: ");
+                char[] letters = {'М','Ж','M','F'};
+                Console.Write("Введите новый пол (М/Ж, M/F):");
                 do
                 {
                     input = Console.ReadLine();
                     Console.WriteLine();
-                } while (input.Length < 2 || input.Length > 20 || input.Contains(' ') || input.Contains('\n'));
+                } while (input.Length != 1 || !letters.Any(letter => input.ToUpper().Contains(letter)));
+                if (input == "F" || input == "Ж") temp.Gender = "Женский";
+                else temp.Gender = "Мужской";
 
-                temp.Gender = input;
                 sportsmen[index] = temp;
 
                 break;
@@ -336,7 +351,7 @@ class Manager
                 {
                     input = Console.ReadLine();
                     Console.WriteLine();
-                } while (!uint.TryParse(input, out temp.BirthYear) || input.Length != 4);
+                } while (!uint.TryParse(input, out temp.BirthYear) || temp.BirthYear < 1900 || temp.BirthYear > 2024);
 
                 sportsmen[index] = temp;
 
@@ -347,8 +362,7 @@ class Manager
                 {
                     input = Console.ReadLine();
                     Console.WriteLine();
-                } while (!uint.TryParse(input, out temp.Height) || input.Length < 2 || input.Length > 3);
-
+                } while (!uint.TryParse(input, out temp.Height) || temp.Height < 40 || temp.Height > 250);
                 sportsmen[index] = temp;
 
                 break;
@@ -389,5 +403,9 @@ class Manager
             writer.WriteLine(line);
         }
         writer.Close();
+    }
+    private static LinkedList<Sportsman> SortSportsmenByLastName(LinkedList<Sportsman> sportsmen)
+    {
+        return new LinkedList<Sportsman>(sportsmen.OrderBy(s => s.LastName));
     }
 }
